@@ -18,7 +18,7 @@
     "vscode": "^1.84.0"
   },
   "categories": [
-    "Other"
+    "AI"
   ],
   "activationEvents": [
     "onCommand:tokligence.openChat",
@@ -127,13 +127,29 @@
       }
     }
   },
+  "extensionKind": ["ui"],
+  "galleryBanner": {
+    "color": "#040b1a",
+    "theme": "dark"
+  },
+  "preview": true,
   "keywords": [
     "tokligence",
     "gateway",
     "llm",
+    "ai",
     "chat",
+    "streaming",
+    "sse",
+    "models",
+    "openai",
+    "anthropic",
+    "claude",
+    "embeddings",
+    "marketplace",
     "openai-compatible"
   ],
+  "qna": "marketplace",
   "scripts": {
     "vscode:prepublish": "npm run bundle",
     "compile": "tsc -p ./",
