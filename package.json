@@ -1,0 +1,160 @@
+{
+  "name": "tokligence-gateway",
+  "displayName": "Tokligence Gateway",
+  "description": "Chat with Tokligence Gateway from VS Code. Includes connection test and optional local binary management.",
+  "version": "0.2.0",
+  "publisher": "tokligence",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tokligence/tokligence-gateway-vs"
+  },
+  "homepage": "https://tokligence.ai/",
+  "bugs": {
+    "url": "https://github.com/tokligence/tokligence-gateway-vs/issues"
+  },
+  
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:tokligence.openChat",
+    "onCommand:tokligence.selectModel",
+    "onCommand:tokligence.testConnection",
+    "onCommand:tokligence.setApiKey",
+    "onCommand:tokligence.startLocalGateway",
+    "onCommand:tokligence.stopLocalGateway",
+    "onCommand:tokligence.downloadBinary"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tokligence.openChat",
+        "title": "Tokligence: Open Chat"
+      },
+      {
+        "command": "tokligence.selectModel",
+        "title": "Tokligence: Select Model"
+      },
+      {
+        "command": "tokligence.testConnection",
+        "title": "Tokligence: Test Connection"
+      },
+      {
+        "command": "tokligence.setApiKey",
+        "title": "Tokligence: Set API Key"
+      },
+      {
+        "command": "tokligence.startLocalGateway",
+        "title": "Tokligence: Start Local Gateway"
+      },
+      {
+        "command": "tokligence.stopLocalGateway",
+        "title": "Tokligence: Stop Local Gateway"
+      },
+      {
+        "command": "tokligence.downloadBinary",
+        "title": "Tokligence: Download/Update Local Gateway"
+      }
+    ],
+    "configuration": {
+      "title": "Tokligence Gateway",
+      "properties": {
+        "tokligence-gateway.url": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "Base URL of the Tokligence Gateway."
+        },
+        "tokligence-gateway.apiPath": {
+          "type": "string",
+          "default": "/v1/chat/completions",
+          "description": "Chat API path (OpenAI-compatible by default)."
+        },
+        "tokligence-gateway.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Default model name to send in chat requests."
+        },
+        "tokligence-gateway.healthPath": {
+          "type": "string",
+          "default": "/healthz",
+          "description": "Health endpoint to check connectivity."
+        },
+        "tokligence-gateway.systemPrompt": {
+          "type": "string",
+          "default": "You are a helpful coding assistant.",
+          "markdownDescription": "System prompt sent as the first message in each chat session."
+        },
+        "tokligence-gateway.version": {
+          "type": "string",
+          "default": "v0.2.0",
+          "description": "Gateway release tag to download (e.g. v0.2.0)."
+        },
+        "tokligence-gateway.startLocalBinary": {
+          "type": "boolean",
+          "default": false,
+          "description": "Start a local gateway binary from the extension."
+        },
+        "tokligence-gateway.binaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the local Tokligence Gateway binary (if managed externally)."
+        },
+        "tokligence-gateway.autoDownloadBinary": {
+          "type": "boolean",
+          "default": true,
+          "description": "If enabled, automatically download the gateway binary when missing."
+        },
+        "tokligence-gateway.useStreaming": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use streaming responses if the gateway supports OpenAI-style SSE."
+        },
+        "tokligence-gateway.requestTimeoutMs": {
+          "type": "number",
+          "default": 60000,
+          "description": "HTTP request timeout in milliseconds."
+        },
+        "tokligence-gateway.requestHeaders": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Additional HTTP headers for requests. For Authorization use the 'Tokligence: Set API Key' command."
+        }
+      }
+    }
+  },
+  "keywords": [
+    "tokligence",
+    "gateway",
+    "llm",
+    "chat",
+    "openai-compatible"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run bundle",
+    "compile": "tsc -p ./",
+    "bundle": "esbuild src/extension.ts --bundle --external:vscode --platform=node --format=cjs --outfile=out/extension.js --sourcemap",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/node": "^20.10.5",
+    "@types/tar": "^6.1.13",
+    "@types/vscode": "^1.84.0",
+    "@vscode/vsce": "^2.23.0",
+    "esbuild": "^0.25.12",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "axios": "^1.6.7",
+    "eventsource-parser": "^1.1.2",
+    "tar": "^6.2.0"
+  }
+}
