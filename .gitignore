@@ -1,5 +1,5 @@
-out/*
-!out/extension.js
-node_modules
-.vsix
+out/
+node_modules/
+*.vsix
 .DS_Store
+.vscode-test/

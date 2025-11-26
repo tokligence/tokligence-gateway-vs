@@ -1,8 +1,8 @@
 {
   "name": "tokligence-gateway",
   "displayName": "Tokligence Gateway",
-  "description": "Chat with Tokligence Gateway from VS Code. Includes connection test and optional local binary management.",
-  "version": "0.2.0",
+  "description": "LLM Gateway for developers: PII/API key detection, multi-provider translation (OpenAI↔Anthropic↔Gemini), auto-configure Continue/Cursor/Claude Code",
+  "version": "0.4.0",
   "publisher": "tokligence",
   "repository": {
     "type": "git",
@@ -12,53 +12,89 @@
   "bugs": {
     "url": "https://github.com/tokligence/tokligence-gateway-vs/issues"
   },
-  
   "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.84.0"
   },
   "categories": [
-    "AI"
+    "AI",
+    "Other"
   ],
   "activationEvents": [
-    "onCommand:tokligence.openChat",
-    "onCommand:tokligence.selectModel",
-    "onCommand:tokligence.testConnection",
-    "onCommand:tokligence.setApiKey",
-    "onCommand:tokligence.startLocalGateway",
-    "onCommand:tokligence.stopLocalGateway",
-    "onCommand:tokligence.downloadBinary"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "tokligence.openChat",
-        "title": "Tokligence: Open Chat"
+        "title": "Tokligence: Open Chat",
+        "icon": "$(comment-discussion)"
       },
       {
         "command": "tokligence.selectModel",
-        "title": "Tokligence: Select Model"
+        "title": "Tokligence: Select Model",
+        "icon": "$(symbol-enum)"
       },
       {
         "command": "tokligence.testConnection",
-        "title": "Tokligence: Test Connection"
-      },
-      {
-        "command": "tokligence.setApiKey",
-        "title": "Tokligence: Set API Key"
+        "title": "Tokligence: Test Connection",
+        "icon": "$(debug-disconnect)"
       },
       {
         "command": "tokligence.startLocalGateway",
-        "title": "Tokligence: Start Local Gateway"
+        "title": "Tokligence: Start Gateway",
+        "icon": "$(play)"
       },
       {
         "command": "tokligence.stopLocalGateway",
-        "title": "Tokligence: Stop Local Gateway"
+        "title": "Tokligence: Stop Gateway",
+        "icon": "$(debug-stop)"
       },
       {
         "command": "tokligence.downloadBinary",
-        "title": "Tokligence: Download/Update Local Gateway"
+        "title": "Tokligence: Download/Update Gateway Binary",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "tokligence.detectAgents",
+        "title": "Tokligence: Detect Coding Agents",
+        "icon": "$(search)"
+      },
+      {
+        "command": "tokligence.configureAgents",
+        "title": "Tokligence: Configure Coding Agents",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "tokligence.showStatus",
+        "title": "Tokligence: Show Gateway Status",
+        "icon": "$(info)"
+      },
+      {
+        "command": "tokligence.configureProviders",
+        "title": "Tokligence: Configure API Providers",
+        "icon": "$(key)"
+      },
+      {
+        "command": "tokligence.setWorkMode",
+        "title": "Tokligence: Set Work Mode (Auto/Passthrough/Translation)",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "tokligence.togglePiiFirewall",
+        "title": "Tokligence: Toggle PII Firewall",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "tokligence.openDashboard",
+        "title": "Tokligence: Open Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "tokligence.viewUsage",
+        "title": "Tokligence: View Token Usage",
+        "icon": "$(graph)"
       }
     ],
     "configuration": {
@@ -66,96 +102,237 @@
       "properties": {
         "tokligence-gateway.url": {
           "type": "string",
-          "default": "http://localhost:8080",
-          "description": "Base URL of the Tokligence Gateway."
+          "default": "http://localhost:8081",
+          "description": "Base URL of the Tokligence Gateway.",
+          "order": 1
         },
-        "tokligence-gateway.apiPath": {
-          "type": "string",
-          "default": "/v1/chat/completions",
-          "description": "Chat API path (OpenAI-compatible by default)."
-        },
-        "tokligence-gateway.model": {
-          "type": "string",
-          "default": "gpt-4o-mini",
-          "description": "Default model name to send in chat requests."
-        },
-        "tokligence-gateway.healthPath": {
-          "type": "string",
-          "default": "/healthz",
-          "description": "Health endpoint to check connectivity."
-        },
-        "tokligence-gateway.systemPrompt": {
-          "type": "string",
-          "default": "You are a helpful coding assistant.",
-          "markdownDescription": "System prompt sent as the first message in each chat session."
-        },
-        "tokligence-gateway.version": {
-          "type": "string",
-          "default": "v0.2.0",
-          "description": "Gateway release tag to download (e.g. v0.2.0)."
-        },
-        "tokligence-gateway.startLocalBinary": {
+        "tokligence-gateway.startOnActivation": {
           "type": "boolean",
-          "default": false,
-          "description": "Start a local gateway binary from the extension."
-        },
-        "tokligence-gateway.binaryPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the local Tokligence Gateway binary (if managed externally)."
+          "default": true,
+          "description": "Automatically start gateway when VS Code opens.",
+          "order": 2
         },
         "tokligence-gateway.autoDownloadBinary": {
           "type": "boolean",
           "default": true,
-          "description": "If enabled, automatically download the gateway binary when missing."
+          "description": "Automatically download gateway binary if missing.",
+          "order": 3
+        },
+        "tokligence-gateway.version": {
+          "type": "string",
+          "default": "v0.4.0",
+          "description": "Gateway release version to download.",
+          "order": 4
+        },
+        "tokligence-gateway.workMode": {
+          "type": "string",
+          "enum": ["auto", "passthrough", "translation"],
+          "default": "auto",
+          "enumDescriptions": [
+            "Smart routing - automatically choose passthrough or translation",
+            "Only direct proxy to upstream providers",
+            "Only protocol translation (OpenAI↔Anthropic↔Gemini)"
+          ],
+          "description": "Gateway work mode for API routing.",
+          "order": 10
+        },
+        "tokligence-gateway.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key (stored securely).",
+          "order": 20
+        },
+        "tokligence-gateway.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API Key (stored securely).",
+          "order": 21
+        },
+        "tokligence-gateway.geminiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Google Gemini API Key (stored securely).",
+          "order": 22
+        },
+        "tokligence-gateway.modelRoutes": {
+          "type": "string",
+          "default": "claude*=>anthropic,gpt-*=>openai,o*=>openai,gemini-*=>gemini",
+          "markdownDescription": "Model routing rules. Format: `pattern=>provider,pattern=>provider`",
+          "order": 30
+        },
+        "tokligence-gateway.piiFirewallEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable PII/API key detection firewall.",
+          "order": 40
+        },
+        "tokligence-gateway.piiFirewallMode": {
+          "type": "string",
+          "enum": ["monitor", "redact", "enforce"],
+          "default": "redact",
+          "enumDescriptions": [
+            "Log PII detections but allow requests through",
+            "Automatically mask/redact detected PII before sending to LLM",
+            "Block requests containing PII"
+          ],
+          "description": "PII Firewall mode.",
+          "order": 41
+        },
+        "tokligence-gateway.autoConfigureAgents": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-configure detected coding agents (Continue, Cursor, etc.) to use gateway.",
+          "order": 50
+        },
+        "tokligence-gateway.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Default model for chat requests.",
+          "order": 60
+        },
+        "tokligence-gateway.systemPrompt": {
+          "type": "string",
+          "default": "You are a helpful coding assistant.",
+          "description": "System prompt for chat sessions.",
+          "order": 61
         },
         "tokligence-gateway.useStreaming": {
           "type": "boolean",
           "default": true,
-          "description": "Use streaming responses if the gateway supports OpenAI-style SSE."
+          "description": "Use streaming responses (SSE).",
+          "order": 62
         },
         "tokligence-gateway.requestTimeoutMs": {
           "type": "number",
-          "default": 60000,
-          "description": "HTTP request timeout in milliseconds."
+          "default": 120000,
+          "description": "HTTP request timeout in milliseconds.",
+          "order": 63
         },
-        "tokligence-gateway.requestHeaders": {
-          "type": "object",
-          "default": {},
-          "markdownDescription": "Additional HTTP headers for requests. For Authorization use the 'Tokligence: Set API Key' command."
+        "tokligence-gateway.binaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to gateway binary (leave empty for auto-managed).",
+          "order": 70
+        },
+        "tokligence-gateway.multiportMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable multi-port mode (separate ports for OpenAI/Anthropic/Gemini).",
+          "order": 80
+        },
+        "tokligence-gateway.facadePort": {
+          "type": "number",
+          "default": 8081,
+          "description": "Main gateway port (facade).",
+          "order": 81
+        },
+        "tokligence-gateway.openaiPort": {
+          "type": "number",
+          "default": 8082,
+          "description": "OpenAI-specific port (multiport mode).",
+          "order": 82
+        },
+        "tokligence-gateway.anthropicPort": {
+          "type": "number",
+          "default": 8083,
+          "description": "Anthropic-specific port (multiport mode).",
+          "order": 83
+        },
+        "tokligence-gateway.geminiPort": {
+          "type": "number",
+          "default": 8084,
+          "description": "Gemini-specific port (multiport mode).",
+          "order": 84
+        },
+        "tokligence-gateway.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show gateway status in status bar.",
+          "order": 90
+        },
+        "tokligence-gateway.logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Gateway log level.",
+          "order": 91
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tokligence",
+          "title": "Tokligence Gateway",
+          "icon": "$(shield)"
+        }
+      ]
+    },
+    "views": {
+      "tokligence": [
+        {
+          "id": "tokligence.status",
+          "name": "Status"
+        },
+        {
+          "id": "tokligence.providers",
+          "name": "Providers"
+        },
+        {
+          "id": "tokligence.agents",
+          "name": "Coding Agents"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "tokligence.startLocalGateway",
+          "when": "view == tokligence.status",
+          "group": "navigation"
+        },
+        {
+          "command": "tokligence.stopLocalGateway",
+          "when": "view == tokligence.status",
+          "group": "navigation"
+        }
+      ]
     }
   },
-  "extensionKind": ["ui"],
+  "extensionKind": ["ui", "workspace"],
   "galleryBanner": {
     "color": "#040b1a",
     "theme": "dark"
   },
-  "preview": true,
+  "preview": false,
   "keywords": [
     "tokligence",
     "gateway",
     "llm",
     "ai",
-    "chat",
-    "streaming",
-    "sse",
-    "models",
+    "pii",
+    "privacy",
+    "api-key",
+    "security",
+    "firewall",
+    "continue",
+    "cursor",
+    "claude-code",
+    "copilot",
     "openai",
     "anthropic",
-    "claude",
-    "embeddings",
-    "marketplace",
-    "openai-compatible"
+    "gemini",
+    "proxy",
+    "translation",
+    "multi-provider"
   ],
   "qna": "marketplace",
   "scripts": {
     "vscode:prepublish": "npm run bundle",
     "compile": "tsc -p ./",
-    "bundle": "esbuild src/extension.ts --bundle --external:vscode --platform=node --format=cjs --outfile=out/extension.js --sourcemap",
+    "bundle": "esbuild src/extension.ts --bundle --external:vscode --platform=node --format=cjs --outfile=out/extension.js --sourcemap --minify",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package",
+    "package": "vsce package --no-dependencies",
     "publish": "vsce publish"
   },
   "devDependencies": {
