@@ -4,6 +4,7 @@
   "description": "LLM Gateway for developers: PII/API key detection, multi-provider translation (OpenAI↔Anthropic↔Gemini), auto-configure Continue/Cursor/Claude Code",
   "version": "0.4.0",
   "publisher": "tokligence",
+  "icon": "images/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/tokligence/tokligence-gateway-vs"
